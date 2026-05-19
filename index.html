@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Список з діленням</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background: white;
+      padding: 25px;
+      border-radius: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    select, input {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    input[type="number"] {
+      width: 140px;
+    }
+    .result {
+      min-width: 120px;
+      font-weight: bold;
+      color: #1e7a1e;
+    }
+    .item-name {
+      min-width: 160px;
+      font-weight: bold;
+    }
+    .divider-box {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 2px solid #ddd;
+    }
+    .divider-box label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Винос</h1>
+    
+    <div class="divider-box" style="margin-bottom: 25px; margin-top: 0; border-top: none; padding-top: 0;">
+      <label for="locationSelect">Оберіть локацію:</label>
+      <select id="locationSelect">
+        <option value="Кузня">Кузня</option>
+        <option value="Лима">Лима</option>
+        <option value="Затон">Затон</option>
+      </select>
+    </div>
+
+    <div id="rows"></div>
+
+    <div class="divider-box">
+      <label for="divider">Число, на яке діляться всі значення:</label>
+      <input type="range" id="divider" min="1" max="5" value="1" />
+      <span id="dividerValue">1</span>
+    </div>
+  </div>  
+
+  <script>
+    const locations = {
+      "Кузня": ["Грошове забеспечення", "Залишки антен", "Частини ПДА"],
+      "Лима": ["Грошове забеспечення", "Залишки антен", "Частини ПДА", "Сердце Лимб", "Лоскут"],
+      "Затон": ["Грошове забеспечення", "Залишки антен", "Частини ПДА", "Сердце Лимб", "Лоскут"]
+    };
+
+    const rowsContainer = document.getElementById('rows');
+    const dividerInput = document.getElementById('divider'); 
+    const dividerValueText = document.getElementById('dividerValue'); 
+    const locationSelect = document.getElementById('locationSelect');
+
+    function createRow(name) {
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.innerHTML = `
+        <div class="item-name">${name}</div>
+        <input type="number" class="value-input" placeholder="Введіть число" />
+        <span>=</span>
+        <div class="result">0</div>
+      `;
+      rowsContainer.appendChild(row);
+    }
+
+    function renderRows(location) {
+      rowsContainer.innerHTML = '';
+      locations[location].forEach(item => {
+        createRow(item);
+      });
+      updateResults();
+    }
+
+    locationSelect.addEventListener('change', () => {
+      renderRows(locationSelect.value);
+    });
+
+    function updateResults() {
+      const divider = parseFloat(dividerInput.value);
+      dividerValueText.textContent = divider;
+
+      document.querySelectorAll('.row').forEach(row => {
+        const input = row.querySelector('.value-input');
+        const result = row.querySelector('.result');
+        const value = parseFloat(input.value);
+
+        if (!isNaN(value) && divider > 0) {
+          result.textContent = (value / divider)
+            .toFixed(2)
+            .replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        } else {
+          result.textContent = '0';
+        }
+      });
+    }
+
+    renderRows('Кузня');
+    document.addEventListener('input', updateResults);
+  </script>
+</body>
+</html>
