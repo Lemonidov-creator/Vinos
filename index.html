@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Список з діленням</title>
+  <title>Групові списки з діленням</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,17 +11,84 @@
       margin: 0;
       padding: 20px;
     }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    /* Панель керування зверху */
+    .control-panel {
+      max-width: 1200px;
+      margin: 0 auto 25px auto;
+      background: white;
+      padding: 15px;
+      border-radius: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    select, button {
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    select {
+      border: 1px solid #ccc;
+      background: white;
+    }
+    button {
+      border: none;
+      background: #1e7a1e;
+      color: white;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #155415;
+    }
+    /* Сітка для карток (на ПК — збоку, на телефоні — один під одним) */
+    .cards-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+      justify-content: center;
+    }
+    /* Сама картка калькулятора */
     .container {
-      max-width: 700px;
-      margin: auto;
+      width: 100%;
+      max-width: 450px; /* Обмежуємо ширину, щоб поміщалися збоку */
       background: white;
       padding: 25px;
       border-radius: 14px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      position: relative;
+      box-sizing: border-radius;
     }
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 10px;
+    }
+    .card-title {
+      font-size: 22px;
+      margin: 0;
+      font-weight: bold;
+    }
+    .delete-btn {
+      background: #cc2424;
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+    .delete-btn:hover {
+      background: #991b1b;
     }
     .row {
       display: flex;
@@ -30,17 +97,15 @@
       margin-bottom: 15px;
       flex-wrap: wrap;
     }
-    select, input {
+    input[type="number"] {
       padding: 10px;
       border-radius: 8px;
       border: 1px solid #ccc;
       font-size: 16px;
-    }
-    input[type="number"] {
-      width: 140px;
+      width: 120px;
     }
     .result {
-      min-width: 120px;
+      min-width: 100px;
       font-weight: bold;
       color: #1e7a1e;
     }
@@ -49,8 +114,8 @@
       font-weight: bold;
     }
     .divider-box {
-      margin-top: 30px;
-      padding-top: 20px;
+      margin-top: 20px;
+      padding-top: 15px;
       border-top: 2px solid #ddd;
     }
     .divider-box label {
@@ -58,87 +123,138 @@
       margin-bottom: 10px;
       font-weight: bold;
     }
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .slider-container input {
+      flex: 1;
+    }
+    .divider-val {
+      font-weight: bold;
+      min-width: 15px;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Винос</h1>
-    
-    <div class="divider-box" style="margin-bottom: 25px; margin-top: 0; border-top: none; padding-top: 0;">
-      <label for="locationSelect">Оберіть локацію:</label>
-      <select id="locationSelect">
-        <option value="Кузня">Кузня</option>
-        <option value="Лима">Лима</option>
-        <option value="Затон">Затон</option>
-      </select>
-    </div>
 
-    <div id="rows"></div>
+  <h1>Калькулятор Виносу</h1>
 
-    <div class="divider-box">
-      <label for="divider">Число, на яке діляться всі значення:</label>
-      <input type="range" id="divider" min="1" max="5" value="1" />
-      <span id="dividerValue">1</span>
-    </div>
-  </div>  
+  <div class="control-panel">
+    <label for="locationSelect" style="font-weight: bold; font-size: 16px;">Оберіть локацію для нової картки:</label>
+    <select id="locationSelect">
+      <option value="Кузня">Кузня</option>
+      <option value="Лима">Лима</option>
+      <option value="Затон">Затон</option>
+    </select>
+    <button id="addCardBtn">➕ Додати картку на екран</button>
+  </div>
+
+  <div class="cards-grid" id="cardsGrid"></div>
 
   <script>
-    const locations = {
+    // Шаблони предметів для локацій
+    const locationsData = {
       "Кузня": ["Грошове забеспечення", "Залишки антен", "Частини ПДА"],
       "Лима": ["Грошове забеспечення", "Залишки антен", "Частини ПДА", "Сердце Лимб", "Лоскут"],
       "Затон": ["Грошове забеспечення", "Залишки антен", "Частини ПДА", "Сердце Лимб", "Лоскут"]
     };
 
-    const rowsContainer = document.getElementById('rows');
-    const dividerInput = document.getElementById('divider'); 
-    const dividerValueText = document.getElementById('dividerValue'); 
+    const cardsGrid = document.getElementById('cardsGrid');
+    const addCardBtn = document.getElementById('addCardBtn');
     const locationSelect = document.getElementById('locationSelect');
 
-    function createRow(name) {
-      const row = document.createElement('div');
-      row.className = 'row';
-      row.innerHTML = `
-        <div class="item-name">${name}</div>
-        <input type="number" class="value-input" placeholder="Введіть число" />
-        <span>=</span>
-        <div class="result">0</div>
-      `;
-      rowsContainer.appendChild(row);
-    }
+    let cardCounter = 0;
 
-    function renderRows(location) {
-      rowsContainer.innerHTML = '';
-      locations[location].forEach(item => {
-        createRow(item);
+    // Функція створення нової незалежної картки
+    function createCard(locationName) {
+      cardCounter++;
+      const cardId = `card-${cardCounter}`;
+      
+      const card = document.createElement('div');
+      card.className = 'container';
+      card.id = cardId;
+
+      // Генеруємо HTML для рядків предметів
+      let rowsHtml = '';
+      locationsData[locationName].forEach(item => {
+        rowsHtml += `
+          <div class="row">
+            <div class="item-name">${item}</div>
+            <input type="number" class="value-input" placeholder="0" />
+            <span>=</span>
+            <div class="result">0</div>
+          </div>
+        `;
       });
-      updateResults();
+
+      // Збираємо всю картку разом
+      card.innerHTML = `
+        <div class="card-header">
+          <h2 class="card-title">${locationName}</h2>
+          <button class="delete-btn" onclick="deleteCard('${cardId}')">Видалити</button>
+        </div>
+        
+        <div class="rows-container">
+          ${rowsHtml}
+        </div>
+
+        <div class="divider-box">
+          <label>Число, на яке діляться всі значення:</label>
+          <div class="slider-container">
+            <input type="range" class="divider-slider" min="1" max="5" value="1" />
+            <span class="divider-val">1</span>
+          </div>
+        </div>
+      `;
+
+      // Додаємо картку в сітку на екрані
+      cardsGrid.appendChild(card);
+
+      // Навішуємо події прослуховування саме для цієї картки
+      const slider = card.querySelector('.divider-slider');
+      const sliderVal = card.querySelector('.divider-val');
+
+      // Функція перерахунку конкретної картки
+      function updateCardResults() {
+        const divider = parseFloat(slider.value);
+        sliderVal.textContent = divider;
+
+        card.querySelectorAll('.row').forEach(row => {
+          const input = row.querySelector('.value-input');
+          const result = row.querySelector('.result');
+          const value = parseFloat(input.value);
+
+          if (!isNaN(value) && divider > 0) {
+            result.textContent = (value / divider)
+              .toFixed(2)
+              .replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+          } else {
+            result.textContent = '0';
+          }
+        });
+      }
+
+      // Слухаємо зміни всередині цієї картки
+      card.addEventListener('input', updateCardResults);
     }
 
-    locationSelect.addEventListener('change', () => {
-      renderRows(locationSelect.value);
+    // Функція видалення картки з екрана
+    function deleteCard(id) {
+      const cardToDelete = document.getElementById(id);
+      if (cardToDelete) {
+        cardToDelete.remove();
+      }
+    }
+
+    // Обробник натискання на кнопку "Додати картку"
+    addCardBtn.addEventListener('click', () => {
+      createCard(locationSelect.value);
     });
 
-    function updateResults() {
-      const divider = parseFloat(dividerInput.value);
-      dividerValueText.textContent = divider;
-
-      document.querySelectorAll('.row').forEach(row => {
-        const input = row.querySelector('.value-input');
-        const result = row.querySelector('.result');
-        const value = parseFloat(input.value);
-
-        if (!isNaN(value) && divider > 0) {
-          result.textContent = (value / divider)
-            .toFixed(2)
-            .replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-        } else {
-          result.textContent = '0';
-        }
-      });
-    }
-
-    renderRows('Кузня');
-    document.addEventListener('input', updateResults);
+    // При завантаженні сайту автоматично створюємо одну першу картку для Кузні
+    createCard('Кузня');
   </script>
 </body>
 </html>
